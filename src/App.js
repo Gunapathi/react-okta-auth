@@ -1,25 +1,46 @@
-import logo from './logo.svg';
-import './App.css';
+import React from "react";
+import { Route, Routes, useNavigate } from "react-router-dom";
+import { Security, LoginCallback, SecureRoute } from "@okta/okta-react";
+import { OktaAuth, toRelativeUrl } from "@okta/okta-auth-js";
+import Locked from "./Locked";
+import Profile from "./Profile";
+import { oktaConfig } from "./lib/oktaConfig";
+import Home from "./Home";
+const CALLBACK_PATH = "/login/callback";
 
-function App() {
+const oktaAuth = new OktaAuth(oktaConfig);
+
+const App = () => {
+  const history = useNavigate();
+  const restoreOriginalUri = async (_oktaAuth, originalUri) => {
+    history.replace(toRelativeUrl(originalUri || "/", window.location.origin));
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Security oktaAuth={oktaAuth} restoreOriginalUri={restoreOriginalUri}>
+      <Routes>
+        <Route path="/" exact element={<Home />} />
+        <Route path={CALLBACK_PATH} exact element={<LoginCallback />} />
+        <Route path="/locked" exact element={<Locked />} />
+        <Route path="/profile" element={<Profile />} />
+      </Routes>
+    </Security>
   );
-}
+};
 
 export default App;
+
+/* secure route on entire application
+const App = () => { 
+  return (
+    <Router>
+      <Security {...config} >
+        <Switch>
+          <Route path="/login/callback" component={LoginCallback} />
+          <SecureRoute path="/" />
+        </Switch>
+      </Security>
+    </Router>
+  );
+};
+*/
